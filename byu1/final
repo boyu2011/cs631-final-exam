@@ -1,6 +1,92 @@
 Final exam
 Bo Yu ( byu1@stevens.edu)
 
+1)
+
+	Unix Shell is a program execution environment. It accepts user's
+	command, execute the command, then wait for the next user's input. 
+	
+	When user input a command, the shell will keep the whole input into
+	a buffer, and parse the input, understand each token, such as program
+	name, program arguments, redirection signs like '|', '<' or '>'.
+
+	If the input doesn't contain redirection signs, then shell will create
+	a new child process, and call the exec() function to execute the user's
+	command within the child process; at the same time, the parent process
+	will wait for child's termination. And then, shell will wait for the
+	next user's input.
+	
+	If the input contains redirection signs, shell should analyze them 
+	carefully, to determine who is the input side, who is the output side.
+	Let's say input side is A, and output side is B. More complexity, shell
+	may resolve the situation which involved more redirection signs.
+
+	With a command contains redirection signs, shell will create a pipeline 
+	in order to communicate between two processes. Then shell will create a
+	new process to handle B as we mentioned above. 
+	
+	In the parent process, shell will make sure that the A's execution output
+	will re-direct to child process's input. Then parent process will 
+	execute A, and then wait for child process's termination.
+	
+	In the child process, shell will make sure that the input will come from 
+	parent's output. It can be achieved by manipulating pipeline. Then use 
+	exec() to execute B. After B has been executed, shell will go to parent 
+	process, and wait for the next user's input.
+	
+	Usually user may cancels the program's execution by input 'ctrl+C'. To
+	handle this situlation, the shell should register a signal handler.
+	In the handler function, shell should kill the executing process.
+
+	Sometimes use will change the working directory, so shell should change
+	it carefully to take care of the pathname.
+
+	Shell will be quit when user input 'exit' command or when system shutdown, 
+	shell should do some cleanup before exit.
+
+2)
+
+	shell entry:
+		register a signal handler to handle shell termination by 'Ctrl+C'
+
+		while ( get_input() )
+		{
+			parse_input() to extract program name, arguments, or
+			redirection signs
+			
+			if input equals to 'exit' then exit 
+
+			create a pipe to communicate between two processes
+
+			fork a child process
+
+			[in the parent process]
+				if input contains redirection characters such as '|' '<' '>'
+					let output redirect to child's input
+					execute programA by another fork
+				endif
+
+				wait for child's termination
+			
+			[in the child process]
+				if input contains redirection characters such as '|' '<' '>'
+					direct input from parent's output
+					execute programB
+				endif
+		}
+
+3) 
+
+	One deficiency with creat is that the file is opened only for writing.
+	If we were creating a temporary file that we wanted to write and then 
+	read back, we had to call creat, close, and then open.
+
+	Another issue is that before we writing content to a file, other 
+	processes may write something to our file, so inconsistency may happened.
+
+4)
+
+	
 
 14)
 
@@ -9,4 +95,10 @@ Bo Yu ( byu1@stevens.edu)
 15)
 	
 	See the subdirectory 15
+
+16)
+
+	See the subdirectory 16
+	........
+
 
