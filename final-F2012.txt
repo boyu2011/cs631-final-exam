@@ -1,0 +1,252 @@
+CS631 Advanced Programming in the UNIX Environment, Fall 2012
+
+Final Exam
+
+Please read all instructions carefully before starting to work on this
+exam.  Any conceptual questions or clarification requests you might have
+should be sent to the class mailing list and will be answered for 24 hours
+after the exam has been posted.  After that point, no further questions
+will be answered.  Do not send partial or complete answers to the list.
+
+This is a take-home exam.  You are free to use your book, notes, online
+resources, etc., but you may not consult with other people.  This includes
+asking for help on internet fora or mailing lists.  You must do all work
+entirely by yourself, without exception.
+
+As a word of advice, I encourage you to allocate a single block of time
+for this exam just as if it was given in class.  I estimate that it should
+not take you longer than 2.5 hours to complete all the work.
+
+Final exam submission guidelines:
+
+- create a new folder named after your Stevens username
+- inside this folder, create a plain text file called "final"
+- write answers to all the following questions in this file, prefixing
+  them with the question number
+- for problems that are marked as such, create subfolders named after the
+  question/problem number; store any files you might create to solve the
+  given problem in that subfolder
+- create a tar archive of the folder named after your Stevens username;
+  the archive should be named '<username>-final.tar' (where '<username>'
+  is replaced with your Stevens username)
+- attach that archive to an email and send it to jschauma@stevens.edu with
+  a subject line of "[CS631] Final Exam"
+
+The final is due on 2012-12-19, 11:00 am EST.
+
+----
+
+0) 2 points for following the above instructions.
+
+
+1) 15 points
+
+    Describe (in English) how a simple Unix shell is implemented.  Consider
+    command-line argument parsing, input/output redirection, pipelines,
+    signal handling,  process creation, pathnames, and shell termination.
+
+
+2) 15 points
+
+    Write pseudo code to implement the shell you described above.  Make
+    use of subroutines just like you would with actual code.
+
+
+3) 2 points
+
+    Explain why creat(2) was obsoleted.
+
+
+4) 2 points
+
+    In your own words, give two reasons why write(2) may return fewer
+    bytes than requested.
+
+
+5) 2 points
+
+    If process A calls fork, creating process B, and process B then calls
+    fork again, creating process C, and process C calls exec to overlay
+    itself with a new program image, in what order do the processes run
+    after the first fork call?
+
+
+6) 2 points
+
+    How many groups may a single user be in?
+
+
+7) 2 points
+
+    How do you find all members of the group 'users'?  Which functions do
+    you call?
+
+
+8) 12 points
+
+    Consider the files "file1" "file2" "dir/file3" and "dir/file4" with
+    the permissions as indicated below.  List all users (jschauma, root,
+    all users in group wheel, all users in group sys, all users in group
+    users, all other users) who may
+
+    (a) read each of the files
+    (b) write to each of the files
+    (c) remove each of the files
+
+    If the answer is non-obvious, explain.
+
+$ groups jschauma
+users wheel
+$ ls -lad .
+drwxrwxrwt  4 root  wheel  512 Jul 20 17:35 .
+$ ls -la file1 file2 dir
+----rw--w-  1 jschauma  wheel  0 Jul 20 17:35 file1
+-rw-r--r--  1 root      sys    0 Jul 20 17:33 file2
+
+dir:
+total 16
+drwxrwx---  2 root      wheel  512 Jul 20 17:34 .
+wrwxrwxrwt  4 root      wheel  512 Jul 20 17:35 ..
+-rw-------  1 jschauma  wheel    0 Jul 20 17:33 file3
+-r--rw-r--  1 root      wheel    0 Jul 20 17:33 file4
+
+
+9) 2 points
+
+    Every process has a process ID and a parent process ID.  Name 4
+    other properties of a process.
+
+
+10) 4 points
+
+   Name 4 system calls that may block.  For each, give an example of how
+   to avoid blocking.
+
+
+11) 4 points
+
+     Consider the following files and commands executed:
+
+$ whoami
+bob
+$ ls -l file1 file2
+--w-rw-r-x  1 bob     wheel  4 Dec 13 18:12 file1
+--w-rw-r-x  1 susan   wheel  4 Dec 13 18:12 file2
+$ cat bob
+cat: file1: Permission denied
+$ su - susan
+Password:
+$ whoami
+susan
+$ cat file2
+foo
+$ 
+
+    (a) Explain why 'bob' cannot read file1.
+    (b) Explain why 'susan' can read file2.
+
+
+12) 2 points
+
+    Explain the behaviour of this program:
+
+int main(int argc, char **argv) {
+	chdir(argv[1]);
+}
+
+$ cc foo.c
+$ pwd
+/var/tmp
+$ ./a.out /usr/local
+$ pwd
+/var/tmp
+$ 
+
+
+13) 3 points
+
+    Explain the behaviour of this program:
+
+int main(int argc, char **argv) {
+	int pid;
+	write(STDOUT_FILENO, "write1\n", 7);
+	printf("write2\n");
+
+	if ((pid = fork()) > 0) {
+		sleep(2);
+	} else if (pid == 0) {
+		write(STDOUT_FILENO, "write3\n", 7);
+	}
+
+	printf("write4\n");
+}
+
+$ cc foo.c
+$ ./a.out
+write1
+write2
+write3
+write4
+write4
+$ ./a.out  | cat
+write1
+write3
+write2
+write4
+write2
+write4
+$ 
+
+
+14) 8 points
+
+    Write a simple program that opens a TCP connection to the IP address
+    2001:470:1f06:1a3::2 on port 3113 and sends it the string given as
+    the first argument of the command.  Make sure to include all error
+    checking as usual.
+
+    $ ./send hello
+    $
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called send.c
+    - a Makefile
+
+
+15) 8 points
+
+    Write a simple program that listens on the given UDP port on all IPv4
+    interfaces of the host.  The program then reads any messages sent by
+    any clients one line at a time and prints them prefixed with the
+    client's hostname.
+
+    $ ./listen 3113
+    nemo.srcit.stevens-tech.edu hello
+    avalon.srcit.stevens-tech.edu good day, everybody
+    ^C
+    $  
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called listen.c
+    - a Makefile
+
+
+16) 15 points
+
+    Implement a shared, dynamic library that provides the following function:
+
+    char *rev(const char *s);
+
+    The rev() function allocates sufficient memory for a copy of the
+    string s, copies and reverses the given input string and returns a pointer
+    to it.  The pointer may subsequently be used as an argument to the
+    function free(3).  If insufficient memory is available, NULL is
+    returned and errno is set to ENOMEM.
+
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called rev.c
+    - a file called main.c that calls rev()
+    - a Makefile that builds the shared library from the file rev.c
+      as well as a program from the file main.c that is then
+      linked against that library
