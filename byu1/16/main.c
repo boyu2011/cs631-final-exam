@@ -49,6 +49,7 @@ int main( int argc, char ** argv )
         printf ( "%s", rev_ptr );
         printf ( "\n" );
 
+		/* Release memory */
         free ( rev_ptr );
     }
     else

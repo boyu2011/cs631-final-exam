@@ -46,34 +46,43 @@ Bo Yu ( byu1@stevens.edu)
 
 2)
 
-	shell entry:
+	shell program entry:
 		register a signal handler to handle shell termination by 'Ctrl+C'
 
 		while ( get_input() )
-		{
+			
 			parse_input() to extract program name, arguments, or
 			redirection signs
 			
-			if input equals to 'exit' then exit 
+			if input equals to 'exit' then exit
 
-			create a pipe to communicate between two processes
+			if input is a simple command then
+				fork a child process to execute command
+				parent wait until child exits
+				go to next loop
+			end
 
-			fork a child process
+			if input contains redirection signs then
 
-			[in the parent process]
-				if input contains redirection characters such as '|' '<' '>'
-					let output redirect to child's input
-					execute programA by another fork
-				endif
+				create a pipe to communicate between two processes
 
-				wait for child's termination
-			
-			[in the child process]
-				if input contains redirection characters such as '|' '<' '>'
-					direct input from parent's output
-					execute programB
-				endif
-		}
+				fork a child process
+
+				[in the parent process]
+					if input contains redirection characters such as '|' '<' '>'
+						let output redirect to child's input
+						execute programA by fork another process
+					endif
+
+					wait for child's termination
+				
+				[in the child process]
+					if input contains redirection characters such as '|' '<' '>'
+						direct input from parent's output
+						execute programB
+					endif
+			endif
+		end while
 
 3) 
 
@@ -95,12 +104,12 @@ Bo Yu ( byu1@stevens.edu)
 
 6)
 
-	In the pwd.h header file, numerical group ID is presented by gid_t, 
-	and gid_t is 4 byte, so the maximun group id is 2^32, then 2^32
-	groups may a single user be in.
+	It depends. Different systems have different answers.
 
-	But different system may have different implementation. So we have to
-	see their header files, or system standards.
+	For example, I checked Linux system, it said
+	#define NGROUPS_MAX    65536    /* supplemental group IDs are available */
+
+	So we have to get the answer based on different system.
 
 7)
 	
@@ -118,9 +127,24 @@ Bo Yu ( byu1@stevens.edu)
 
 8)
 	
-	(a) read each of the files
-	...............	
-		
+	1. jschauma
+	can read, write, remove each of the files
+
+	2. root
+	can read, write, remove each of the files
+
+	3. all users in group wheel
+	can read file1, file2, file4, can write file1, file4 
+
+	4. all users in group sys
+	can read file2
+
+	5. all users in group users
+	N/A		
+
+	6. all other users
+	N/A
+
 9)
 	
 	File Descriptor Table.
