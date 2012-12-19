@@ -91,13 +91,16 @@ Bo Yu ( byu1@stevens.edu)
 
 5)
 
-	Randomly. No body can make sure who runs first.
+	Randomly. No body can make sure which one runs first.
 
 6)
 
 	In the pwd.h header file, numerical group ID is presented by gid_t, 
 	and gid_t is 4 byte, so the maximun group id is 2^32, then 2^32
 	groups may a single user be in.
+
+	But different system may have different implementation. So we have to
+	see their header files, or system standards.
 
 7)
 	
@@ -107,9 +110,17 @@ Bo Yu ( byu1@stevens.edu)
 	The filed gr_mem of struct group is an array of pointers to the user names
 	that belong to this group.
 
-8)
+	If we want to search the entire group file, we need some additional
+	functions.
+		struct group *getgrent(void);
+		void setgrent(void);
+		void endgrent(void);
 
+8)
 	
+	(a) read each of the files
+	...............	
+		
 9)
 	
 	File Descriptor Table.
@@ -118,6 +129,7 @@ Bo Yu ( byu1@stevens.edu)
 	Stack Segment Pointer.
 
 10)
+
 	1.
 	#include <sys/socket.h>
 	accept();
@@ -126,12 +138,12 @@ Bo Yu ( byu1@stevens.edu)
 	2.
 	read(STDIN_FILENO, buf, sizeof(buf));
 	Use this to avoid blocking: 
-	set_fl ( STDIN_FILENO, O_NONBLOCK );
+	fcntl ( STDIN_FILENO, O_NONBLOCK, 0 );
 	
 	3. 
 	write ( STDOUT_FILENO, buf, sizeof(buf) );
 	Use this to avoid blocking:
-	set_fl ( STDOUT_FILENO, O_NONBLOCK );
+	fcntl ( STDOUT_FILENO, O_NONBLOCK, 0 );
 
 	4.
 	open ();
@@ -140,7 +152,13 @@ Bo Yu ( byu1@stevens.edu)
 
 11)
 
+	(a)
+	File Mode shows that Bob don't have READ permission for file1.
 	
+	(b)
+	sud - susan will Simulate a full login. The environment has been
+	changed. Now the environment is susan's. So susan can read file2.
+
 12)
 
 	This program use chdir() to change the current working directory
@@ -153,15 +171,13 @@ Bo Yu ( byu1@stevens.edu)
 	For the fist attempt ./a.out
 	fork() will create a new process, and the program will have two 
 	seprate roads, the parent one will output "write4" after 2 seconds,
-	and child will output "write3" and "write4"
+	and child will output "write3" and "write4" before that.
 
 	For the second attempt ./a.out | cat
-	printf () and write(STDOUT_FILENO) means differently. This time,
-	printf () will redirect to the input of cat, and write(STDOUT_FILENO)
-	still will output to the Standard Output.
-	The first two lines "write1" and "write3" are outputed by 
-	write(STDOUT_FILENO).
-	The following lines are send to cat, then output by cat.
+	It is affected by buffering and re-direction. 
+	"write1" "write3" "write2" "write4" wll be print out first.
+	Due the sleep(2) call in the parent process, "write2" and "write4"
+	are buffered and redirection, so they are printed after two seconds.
 
 14)
 
