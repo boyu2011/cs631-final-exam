@@ -27,7 +27,7 @@
 int main ( int argc, char ** argv )
 {
 	int socket_fd;
-	int msg_socket;
+	//int msg_socket;
 	struct sockaddr_in server_ip;
 	struct sockaddr_in client_ip_addr;
 	socklen_t client_ip_addr_len = sizeof(client_ip_addr);
@@ -41,7 +41,7 @@ int main ( int argc, char ** argv )
 	}
 
 	/* Create a socket */
-	socket_fd = socket ( AF_INET, SOCK_STREAM, 0 );
+	socket_fd = socket ( AF_INET, SOCK_DGRAM, 0 );
 	if ( socket_fd < 0 )
 	{
 		perror ( "opening stream socket" );
@@ -58,25 +58,21 @@ int main ( int argc, char ** argv )
 		perror ( "binding stream socket" );
 		exit(1);
 	}
-
-	if ( listen ( socket_fd, 5 ) == -1 )
-	{
-		perror ( "listening stream socket" );
-		exit(1);
-	}
-
+	
 	/* Start accepting connection */
 	while (1)
 	{
-		msg_socket = accept ( socket_fd, 
-							  (struct sockaddr *)&client_ip_addr, 
-							  &client_ip_addr_len );
-		if ( msg_socket == -1 )
-		{
-			perror ( "accept()" );
-		}
-
 		memset ( buf, 0x0, sizeof(buf) );
+	
+		if ( recvfrom ( socket_fd,
+						buf,
+						sizeof(buf),
+						0,
+						(struct sockaddr *)&client_ip_addr,
+						&client_ip_addr_len ) < 0 )
+		{
+			perror ( "recvfrom()" );
+		}
 
 		/* Get client hostname info */
 		if ( getnameinfo ( (struct sockaddr * )&client_ip_addr,
@@ -89,24 +85,9 @@ int main ( int argc, char ** argv )
 		{
 			perror ( "gethostinfo()" );
 		}
-		
-		/* Read message from client */
-		if ( read ( msg_socket, buf, sizeof(buf) ) < 0 )
-		{
-			perror ( "reading from client" );
-		}
-		/* Output message */
-		else
-		{
-			printf ( "%s %s", hbuf, buf );
-		}
 
-		/* Close the connection */
-		if ( close ( msg_socket ) == -1 )
-		{
-			perror ( "closing msg_socket" );
-			exit(1);
-		}
+		/* Output message */	
+		printf ( "%s %s", hbuf, buf );
 	}
 
 	exit(0);

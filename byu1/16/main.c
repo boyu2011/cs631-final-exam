@@ -1,38 +1,62 @@
 /*
-	main.c
-	To call rev()
+    main.c
+    
+    Send a string to rev(), and get a new reversed string.
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 
-int main()
+#define TEXT "Do What You Like To Do. Enjoy What You Do."
+
+int main( int argc, char ** argv )
 {
-	void * handle;
-	char *(*rev)(const char *);
-	char * error;
-	
-	handle = dlopen ( "rev.so", RTLD_LAZY );
-	if ( !handle )
-	{
-		fprintf ( stderr, "%s\n", dlerror() );
-		exit (EXIT_FAILURE);
-	}
+    void * handle;
+    char *(*rev)(const char *);
+    char * error;
+    char * rev_ptr = NULL;
 
-	/* Clear any existing error */
-	dlerror();
+    /* Open shared library */
+    handle = dlopen ( "librev.so.1.0", RTLD_LAZY );
+    if ( !handle )
+    {
+        fprintf ( stderr, "%s\n", dlerror() );
+        exit (EXIT_FAILURE);
+    }
 
-	*(void **) (&rev) = dlsysm ( handle, "rev" );
-	if ( ( error = dlerror() ) != NULL )
-	{
-		fprintf ( stderr, "%s\n", error );
-		exit(EXIT_FAILURE);
-	}
+    /* Clear any existing error */
+    dlerror();
 
-	rev ( "hi" );
+    /* Get rev() symbol address */
+    *(void **) (&rev) = dlsym ( handle, "rev" );
+    if ( ( error = dlerror() ) != NULL )
+    {
+        fprintf ( stderr, "%s\n", error );
+        exit(EXIT_FAILURE);
+    }
 
-	dlclose ( handle );
+    printf ( "Before rev()\n" );
+    printf ( TEXT );
+    printf ( "\n" );
 
-	exit(EXIT_SUCCESS);
+    /* Call rev() to get a reversed string */
+    rev_ptr = rev ( TEXT );
+
+    printf ( "After rev()\n" );
+    if ( rev_ptr != NULL )
+    {
+        printf ( "%s", rev_ptr );
+        printf ( "\n" );
+
+        free ( rev_ptr );
+    }
+    else
+    {
+        perror ( "reverse failed" );
+    }
+
+    dlclose ( handle );
+
+    exit(EXIT_SUCCESS);
 }

@@ -86,7 +86,82 @@ Bo Yu ( byu1@stevens.edu)
 
 4)
 
+	Disk is filling up.
+	The file size limit for a given process has been exceeded.
+
+5)
+
+	Randomly. No body can make sure who runs first.
+
+6)
+
+	In the pwd.h header file, numerical group ID is presented by gid_t, 
+	and gid_t is 4 byte, so the maximun group id is 2^32, then 2^32
+	groups may a single user be in.
+
+7)
 	
+	Use API in the grp.h 
+		struct group *getgrnam (const char *name);
+	
+	The filed gr_mem of struct group is an array of pointers to the user names
+	that belong to this group.
+
+8)
+
+	
+9)
+	
+	File Descriptor Table.
+	Current working directory.
+	Process State.
+	Stack Segment Pointer.
+
+10)
+	1.
+	#include <sys/socket.h>
+	accept();
+	If sockfd is in nonblocking mode, accept will return -1.
+
+	2.
+	read(STDIN_FILENO, buf, sizeof(buf));
+	Use this to avoid blocking: 
+	set_fl ( STDIN_FILENO, O_NONBLOCK );
+	
+	3. 
+	write ( STDOUT_FILENO, buf, sizeof(buf) );
+	Use this to avoid blocking:
+	set_fl ( STDOUT_FILENO, O_NONBLOCK );
+
+	4.
+	open ();
+	Use this to avoid blocking:
+	select ();
+
+11)
+
+	
+12)
+
+	This program use chdir() to change the current working directory
+	of the calling process. But the current working directory cannot
+	affect processes that invoke the process that executes the chdir.
+	So shell's current working directory cannot be changed.
+
+13)
+
+	For the fist attempt ./a.out
+	fork() will create a new process, and the program will have two 
+	seprate roads, the parent one will output "write4" after 2 seconds,
+	and child will output "write3" and "write4"
+
+	For the second attempt ./a.out | cat
+	printf () and write(STDOUT_FILENO) means differently. This time,
+	printf () will redirect to the input of cat, and write(STDOUT_FILENO)
+	still will output to the Standard Output.
+	The first two lines "write1" and "write3" are outputed by 
+	write(STDOUT_FILENO).
+	The following lines are send to cat, then output by cat.
 
 14)
 
@@ -99,6 +174,4 @@ Bo Yu ( byu1@stevens.edu)
 16)
 
 	See the subdirectory 16
-	........
-
 
