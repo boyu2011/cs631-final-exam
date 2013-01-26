@@ -1,0 +1,388 @@
+1) 15 points
+
+    Describe (in English) how a simple Unix shell is implemented.  Consider
+    command-line argument parsing, input/output redirection, pipelines,
+    signal handling, process creation, pathnames, and shell termination.
+
+
+In this part, I'm looking for you to demonstrate that you understand how a
+shell works.  There is no single "correct" answer, but you should exhibit
+an understanding of the various components noted above and discussed in
+class.  For example, you want to note:
+
+- command-line argument parsing and tokenization has to happen early on;
+  the command to execute needs to be identified, and the arguments given
+  to the command separated from the shell special characters (such as '|',
+  '>', '<', '>>', '<<', '&')
+
+- input/output redirection requires the appropriate file descriptor
+  manipulations prior to execution of any commands
+
+- pipelines require additional processes, again with the proper I/O
+  redirection
+
+- signals sent to the shell must not cause the shell to terminate
+
+- when executing commands, you either require absolute pathnames or look
+  in the user's PATH environment variable... which brings you to a
+  discussion of the environment
+
+- a discussion of job control is optional
+
+
+It should be noted that the shell does not run as a daemon.  Those of you
+who stated as much should review what exactly a daemon is (lecture 09).
+
+
+2) 15 points
+
+    Write pseudo code to implement the shell you described above.  Make
+    use of subroutines just like you would with actual code.
+
+
+Again, no simple "correct" solution.  What I want to see is that you took
+your description above and translated it into pseudo code.  Note that this
+is "pseudo code", not actual code.  You should have the logical structure
+for the program based on your earlier description, but ideally what you
+create as pseudo code could later on be translated into actual code
+without too many changes in the overall process flow.
+
+
+
+3) 2 points
+
+    Explain why creat(2) was obsoleted.
+
+
+The creat(2) call creates a file and returns a file descriptor in
+write-only mode.  If you wish to open the newly created file in any other
+mode, you have to creat(2) the file, then open(2) it.  This introduces a
+race condition, as another process might have deleted the file in between
+these two calls.  Calling open(2) with O_CREAT thus allows you to create
+and open a file in read-write mode (for example) using a single atomic
+operation.
+
+
+
+4) 2 points
+
+    In your own words, give two reasons why write(2) may return fewer
+    bytes than requested.
+
+
+write(2) may return fewer bytes than requested if, for example, your disk
+is full.  Another example might be if the write call was interrupted by a
+signal (such as SIGPIPE, if the read-end of a pipe disappears).
+
+Note that writing fewer bytes than requested is not necessarily an error
+condition: Non-blocking I/O on flow-controlled objects such as sockets can
+also cause write(2) to write fewer bytes than requested.
+
+
+5) 2 points
+
+    If process A calls fork, creating process B, and process B then calls
+    fork again, creating process C, and process C calls exec to overlay
+    itself with a new program image, in what order do the processes run
+    after the first fork call?
+
+
+The order is undefined.
+
+
+6) 2 points
+
+    How many groups may a single user be in?
+
+
+This is implementation dependent and differs across different Unix
+versions.
+
+
+7) 2 points
+
+    How do you find all members of the group 'users'?  Which functions do
+    you call?
+
+Note that we are not looking for shell commands!
+
+In order to find _all_ members of the group 'users', you need to first
+iterate over the gr_mem array returned by getgrnam(3).  However, this only
+operates on the group database; it is possible for a user to have as their
+primary group the 'users' group, which would be listed in the password
+database and not the group database.  Hence, you also need to iterate over
+the password database using getpwent(3) and look at the pw_gid field of
+all users.
+
+
+8) 12 points
+
+    Consider the files "file1" "file2" "dir/file3" and "dir/file4" with
+    the permissions as indicated below.  List all users (jschauma, root,
+    all users in group wheel, all users in group sys, all users in group
+    users, all other users) who may
+
+    (a) read each of the files
+    (b) write to each of the files
+    (c) remove each of the files
+
+    If the answer is non-obvious, explain.
+
+$ groups jschauma
+users wheel
+$ ls -lad .
+drwxrwxrwt  4 root  wheel  512 Jul 20 17:35 .
+$ ls -la file1 file2 dir
+----rw--w-  1 jschauma  wheel  0 Jul 20 17:35 file1
+-rw-r--r--  1 root      sys    0 Jul 20 17:33 file2
+
+dir:
+total 16
+drwxrwx---  2 root      wheel  512 Jul 20 17:34 .
+wrwxrwxrwt  4 root      wheel  512 Jul 20 17:35 ..
+-rw-------  1 jschauma  wheel    0 Jul 20 17:33 file3
+-r--rw-r--  1 root      wheel    0 Jul 20 17:33 file4
+
+
+(a) file1 can be read by root as well as by anybody in the 'wheel' group,
+except for the user 'jschauma' (since 'jschauma' is the owner, and owner
+read permissions are not given; technically, though, jschauma can chmod(1)
+the file to read it, but you are not required to note this)
+
+    file2 can be read by everybody
+
+    dir/file3 can be read by root (root can do anything), jschauma
+
+    dir/file4 can be read by root (root can do anything), jschauma, and
+    all users in the 'wheel' group; other users cannot read the file
+    due to the directory permissions on 'dir'
+
+(b) file1 can be written by everybody except jschauma (as above)
+
+    file2 can be written by only by root
+
+    dir/file3 can be written by root (root can do anything), jschauma
+
+    dir/file4 can be written by root (root can do anything), jschauma
+    (since jschauma is in the 'wheel' group), and all users in the 'wheel'
+    group
+
+(c) file1 can be removed by root (root can do anything), jschauma; other
+    users cannot remove the file due to the sticky bit being set on the
+    directory file1 is in
+
+    file2 can be removed by root only
+
+    dir/file3 can be removed by root (root can do anything), jschauma
+    (since jschauma is in the 'wheel' group), and all users in the 'wheel'
+    group
+
+    dir/file4 can be removed by root (root can do anything), jschauma
+    (since jschauma is in the 'wheel' group), and all users in the 'wheel'
+    group
+
+
+
+9) 2 points
+
+    Every process has a process ID and a parent process ID.  Name 4
+    other properties of a process.
+
+Here are a few:
+- real and effective user-ID
+- real and effective group-ID
+- various ulimits
+- current working directory
+- umask
+- process group ID
+- session ID
+- priority/niceness
+- process status
+
+
+
+10) 4 points
+
+   Name 4 system calls that may block.  For each, give an example of how
+   to avoid blocking.
+
+Here are some:
+accept(2), read(2), write(2), open(2), send(2), recv(2), listen(2),
+select(2), wait(2), flock(2)
+
+To avoid, set non-blocking mode (O_NONBLOCK, for example via fcntl(2)) or
+specify a timeout (if applicable).
+
+
+11) 4 points
+
+     Consider the following files and commands executed:
+
+$ whoami
+bob
+$ ls -l file1 file2
+--w-rw-r-x  1 bob     wheel  4 Dec 13 18:12 file1
+--w-rw-r-x  1 susan   wheel  4 Dec 13 18:12 file2
+$ cat file1
+cat: file1: Permission denied
+$ su - susan
+Password:
+$ whoami
+susan
+$ cat file2
+foo
+$ 
+
+    (a) Explain why 'bob' cannot read file1.
+    (b) Explain why 'susan' can read file2.
+
+
+'bob' cannot read file1 due to permissions (user read bit missing).
+
+'susan' should not be able to read file2, either.  Since she can, we have
+to speculate that either:
+- 'susan' has UID 0, and thus can read the file
+- 'susan' has a setuid-0 'cat' in her PATH
+- since 'su - susan' changes the current working directory, the 'file2'
+  may very well have different permissions
+
+
+12) 2 points
+
+    Explain the behaviour of this program:
+
+int main(int argc, char **argv) {
+	chdir(argv[1]);
+}
+
+$ cc foo.c
+$ pwd
+/var/tmp
+$ ./a.out /usr/local
+$ pwd
+/var/tmp
+$ 
+
+
+The current working directory is per-process.  When the shell forks a new
+process to execute the command, the new process will happily change its
+current working directory, but after that process exits, we're back to
+where we were.  (Which is why 'cd' must be a shell builtin.)
+
+
+13) 3 points
+
+    Explain the behaviour of this program:
+
+int main(int argc, char **argv) {
+	int pid;
+	write(STDOUT_FILENO, "write1\n", 7);
+	printf("write2\n");
+
+	if ((pid = fork()) > 0) {
+		sleep(2);
+	} else if (pid == 0) {
+		write(STDOUT_FILENO, "write3\n", 7);
+	}
+
+	printf("write4\n");
+}
+
+$ cc foo.c
+$ ./a.out
+write1
+write2
+write3
+write4
+write4
+$ ./a.out  | cat
+write1
+write3
+write2
+write4
+write2
+write4
+$ 
+
+This was discussed in lecture 05.  write(2) performs unbuffered output, so
+data is written immediately.  printf(3) performs buffered output; when
+output is to a terminal, this is line-buffered and output immediately.
+But when output is to a pipe, the write buffer is not flushed immediately,
+so that the child process inherits the parents write buffer with its
+contents.  When each process exits, they both flush their buffer
+containing the previous 'write2' message.
+
+14) 8 points
+
+    Write a simple program that opens a TCP connection to the IP address
+    2001:470:1f06:1a3::2 on port 3113 and sends it the string given as
+    the first argument of the command.  Make sure to include all error
+    checking as usual.
+
+    $ ./send hello
+    $
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called send.c
+    - a Makefile
+
+
+This is, for the most part, streamwrite.c from lecture 07.  Here, you
+should make sure to use IPv6.
+
+
+15) 8 points
+
+    Write a simple program that listens on the given UDP port on all IPv4
+    interfaces of the host.  The program then reads any messages sent by
+    any clients one line at a time and prints them prefixed with the
+    client's hostname.
+
+    $ ./listen 3113
+    nemo.srcit.stevens-tech.edu hello
+    avalon.srcit.stevens-tech.edu good day, everybody
+    ^C
+    $  
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called listen.c
+    - a Makefile
+
+
+This is, for the most part, dgramread.c from lecture 07.  Here, you need
+to make sure to use IPv4, UDP, and listen on all interfaces.  For any
+connection, you should use getpeername(2)/getnameinfo(3) to get the
+information about the client connecting and prepend that string to the
+data sent.
+
+
+16) 15 points
+
+    Implement a shared, dynamic library that provides the following function:
+
+    char *rev(const char *s);
+
+    The rev() function allocates sufficient memory for a copy of the
+    string s, copies and reverses the given input string and returns a pointer
+    to it.  The pointer may subsequently be used as an argument to the
+    function free(3).  If insufficient memory is available, NULL is
+    returned and errno is set to ENOMEM.
+
+
+    You should create a subdirectory for this exercise and submit:
+    - a file called rev.c
+    - a file called main.c that calls rev()
+    - a Makefile that builds the shared library from the file rev.c
+      as well as a program from the file main.c that is then
+      linked against that library
+
+
+Writing a shared library was covered lecture 09.  Implementing the rev
+call itself is a trivial string operation; main.c should just call rev and
+the Makefile should build the library (conditionally, of course) and link
+the main program against it.
+
+Several of you took the example from lecture 09 of explicitly loading a
+shared library without the executable being linked against it.  This is
+not necessary here (and in fact those of you who followed this approach,
+_also_ linked against the library)
